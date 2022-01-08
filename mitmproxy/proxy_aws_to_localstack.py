@@ -26,12 +26,13 @@ class Relay:
         pass
 
     def request(self, flow: mitmproxy.http.HTTPFlow):
-        # For S3 API interactions, we wanna translate <bucket_name>.s3.amazonaws.com
+        # For S3 API interactions, we wanna translate <bucket_name>.s3.[<region>].amazonaws.com
         # requests to s3.amazonaws.com/<bucket_name> requests.
-        if 's3.amazonaws.com' in flow.request.host and 's3.amazonaws.com' != flow.request.host:
-            bucket_name = flow.request.host.split('.s3.amazonaws.com')[0]
-            flow.request.host = '127.0.0.1'
-            flow.request.port = 4566
+        # TODO: Currently has the side-effect of making Scout think your buckets are hosted in af-south-1
+
+        host = flow.request.host
+        if '.s3.' in host:
+            bucket_name = host.split('.')[0]
             flow.request.path = '/{}{}'.format(bucket_name, flow.request.path)
 
         flow.request.host = '127.0.0.1'
@@ -40,8 +41,9 @@ class Relay:
 
     def response(self, flow: mitmproxy.http.HTTPFlow):
         # For EC2 requests calling DescribeRegions that appear to be trying to filter for
-        # "not-opted-in" regions, we manipulate the response from LocalStack that makes it
-        # seem that every region isn't opted in
+        # "not-opted-in" regions, we manipulate the response from LocalStack to ensure
+        # Scout behaves correctly
+
         if 'DescribeRegions' in flow.request.text and 'opt-in-status' in flow.request.text and 'not-opted-in' in flow.request.text:
             flow.response.text = flow.response.text.replace('east', 'fake')
             flow.response.text = flow.response.text.replace('west', 'fake')
@@ -50,5 +52,3 @@ class Relay:
 addons = [
     Relay()
 ]
-
-

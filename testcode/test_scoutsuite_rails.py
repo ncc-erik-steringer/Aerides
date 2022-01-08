@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 import unittest
 
 
@@ -17,7 +18,7 @@ class TestScoutSuiteExpected(unittest.TestCase):
         # start by grabbing a handle to the .services.ec2.findings dict
         ptr = self.scoutdata.get('services', {})
         ptr = ptr.get('ec2', {})
-        ptr = ptr.get('findings')
+        ptr = ptr.get('findings')  # type: Optional[dict]
         if ptr is None:
             return
 
@@ -45,7 +46,7 @@ class TestScoutSuiteExpected(unittest.TestCase):
         # start by getting a handle to the .services.iam.findings dict
         ptr = self.scoutdata.get('services', {})
         ptr = ptr.get('iam', {})
-        ptr = ptr.get('findings')
+        ptr = ptr.get('findings')  # type: Optional[dict]
         if ptr is None:
             return
 

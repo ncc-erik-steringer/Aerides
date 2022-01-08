@@ -30,3 +30,59 @@ there are test cases that check for privlege escalation risks, restrictions on l
 s3:PutObject, IAM Policies with NotAction fields, and security groups that open ports to the world. This repo has 
 GitHub Actions that will execute these test cases for Pull Requests.
 
+## Experimenting
+
+To try this out with your own machine, follow these steps (tested on Ubuntu 20.04):
+
+### Prerequisites
+
+* Python 3.8+, using a virtualenv is *highly* recommended
+* [Terraform](https://www.terraform.io/)
+* [LocalStack](https://github.com/localstack/localstack) (installed via `pip install localstack`)
+* [mitmproxy](https://mitmproxy.org/) (installed via `pip install mitmproxy`, consider using a separate virtualenv)
+* [Scout Suite](https://github.com/nccgroup/ScoutSuite) (installed via `pip install scoutsuite`)
+* [Principal Mapper](https://github.com/nccgroup/PMapper) (installed via `pip install principalmapper`
+
+### Running
+
+Clone this repository onto your machine. Navigate into the `Aerides/infracode` directory and run:
+
+```bash
+localstack start -d  # this will take ~30s to spin up
+terraform init
+terraform apply -var "acctid=000000000000"
+```
+
+This will launch LocalStack (daemon mode) and deploy the Terraform code. Now it is possible to run commands and see 
+the mock infrastructure. For example:
+
+```bash
+aws configure --profile localstack  # set fake access keys, region to us-east-1
+aws --profile localstack --endpoint-url http://localhost:4566 iam list-users
+```
+
+**In a separate shell**, navigate to the `Aerides/mitmproxy` directory and run:
+
+```bash
+mitmdump -k --listen-host 127.0.0.1 --listen-port 8080 -s proxy_aws_to_localstack.py 
+```
+
+With `mitmdump` running, go back to your first shell and run Scout Suite while using the proxy like so:
+
+```bash
+HTTP_PROXY=http://127.0.0.1:8080 \
+HTTPS_PROXY=http://127.0.0.1:8080 \
+AWS_CA_BUNDLE=~/.mitmproxy/mitmproxy-ca-cert.pem \
+scout aws --services iam s3 ec2 vpc --region us-east-1
+```
+
+This should generate a Scout Suite report and launch your web browser with its contents. Then, run PMapper 
+against LocalStack like so:
+
+```bash
+pmapper --profile localstack graph create --localstack-endpoint http://localhost:4566
+pmapper --account 000000000000 visualize  # should output 000000000000.svg if graphviz is installed
+```
+
+
+
