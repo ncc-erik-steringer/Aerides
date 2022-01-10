@@ -1,0 +1,56 @@
+# GitHub Workflow to execute test cases via Principal Mapper
+
+name: "PMapper Checks"
+
+# Run when PR against main comes through with infracode/testcode changes
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "**infracode/*"
+      - "**testcode/*"
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+      - name: Init Terraform
+        run: | 
+          cd $GITHUB_WORKSPACE/infracode
+          terraform init
+      - name: Validate Config
+        run: |
+          cd $GITHUB_WORKSPACE/infracode
+          terraform validate -no-color
+      - name: Setup LocalStack
+        run: |
+          echo "Install LocalStack, AWS CLI, PMapper, Scout Suite via pip"
+          pip install localstack awscli principalmapper scoutsuite
+          echo "Pull localstack/localstack from Docker"
+          docker pull localstack/localstack
+          echo "Start LocalStack"
+          localstack start -d
+          echo "Wait for LocalStack"
+          localstack wait -t 30
+          echo "LocalStack running"
+      - name: Deploy Infra Code
+        run: |
+          cd $GITHUB_WORKSPACE/infracode
+          terraform apply -var "acctid=000000000000"
+      - name: Create PMapper Graph
+        env:
+          PMAPPER_STORAGE: "."
+          AWS_ACCESS_KEY_ID: AKIAFAKEFAKEFAKE
+          AWS_SECRET_ACCESS_KEY: alsofakejustmakesthingswork
+          AWS_REGION: us-east-1
+        run: "pmapper --profile localstack graph create --localstack-endpoint http://localhost:4566"
+      - name: Execute PMapper Test Cases
+        env:
+          PMAPPER_STORAGE: "."
+        run: |
+          cd $GITHUB_WORKSPACE/testcode
+          python -m unittest -v test_permissions.py
