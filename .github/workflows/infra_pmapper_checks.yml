@@ -48,7 +48,7 @@ jobs:
           terraform apply -auto-approve -var "acctid=000000000000"
       - name: Create PMapper Graph
         env:
-          PMAPPER_STORAGE: "."
+          PMAPPER_STORAGE: "$RUNNER_TEMP/pmapper"
           AWS_ACCESS_KEY_ID: AKIAFAKEFAKEFAKE
           AWS_SECRET_ACCESS_KEY: alsofakejustmakesthingswork
           AWS_DEFAULT_REGION: us-east-1
@@ -56,14 +56,19 @@ jobs:
         run: |
           pmapper graph create --localstack-endpoint http://localhost:4566 --include-regions us-east-1 --exclude-services autoscaling 
           pmapper --account 000000000000 visualize
+          mv 000000000000.svg $RUNNER_TEMP/visualization.svg
+          pmapper --account 000000000000 analysis --output-type text > $RUNNER_TEMP/analysis.md
       - name: Generate PMapper Graph Artifact
         uses: actions/upload-artifact@v2
         with:
           name: Account Graph
-          path: "000000000000.svg"
+          path: |
+            ${{ env.RUNNER_TEMP }}/pmapper
+            ${{ env.RUNNER_TEMP }}/visualization.svg
+            ${{ env.RUNNER_TEMP }}/analysis.md
       - name: Execute PMapper Test Cases
         env:
-          PMAPPER_STORAGE: "."
+          PMAPPER_STORAGE: "$RUNNER_TEMP/pmapper"
         run: |
           cd $GITHUB_WORKSPACE/testcode
           python -m unittest -v test_permissions.py
