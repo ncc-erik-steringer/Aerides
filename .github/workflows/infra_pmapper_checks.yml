@@ -54,7 +54,7 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1
           AWS_REGION: us-east-1
         run: |
-          pmapper graph create --localstack-endpoint http://localhost:4566
+          pmapper graph create --localstack-endpoint http://localhost:4566 --include-regions us-east-1 --exclude-services autoscaling 
           pmapper --account 000000000000 visualize
       - name: Generate PMapper Graph Artifact
         uses: actions/upload-artifact@v2
