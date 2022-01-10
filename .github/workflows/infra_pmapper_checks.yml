@@ -42,7 +42,7 @@ jobs:
       - name: Deploy Infra Code
         run: |
           cd $GITHUB_WORKSPACE/infracode
-          terraform apply -var "acctid=000000000000"
+          terraform apply -auto-approve -var "acctid=000000000000"
       - name: Create PMapper Graph
         env:
           PMAPPER_STORAGE: "."
