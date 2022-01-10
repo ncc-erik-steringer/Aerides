@@ -17,7 +17,10 @@ jobs:
   execute:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Install Graphviz
+        run: "sudo apt-get install -y graphviz"
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
       - name: Init Terraform
@@ -31,7 +34,7 @@ jobs:
       - name: Setup LocalStack
         run: |
           echo "Install LocalStack, AWS CLI, PMapper, Scout Suite via pip"
-          pip install localstack awscli principalmapper scoutsuite
+          pip install localstack principalmapper
           echo "Pull localstack/localstack from Docker"
           docker pull localstack/localstack
           echo "Start LocalStack"
@@ -49,7 +52,14 @@ jobs:
           AWS_ACCESS_KEY_ID: AKIAFAKEFAKEFAKE
           AWS_SECRET_ACCESS_KEY: alsofakejustmakesthingswork
           AWS_REGION: us-east-1
-        run: "pmapper --profile localstack graph create --localstack-endpoint http://localhost:4566"
+        run: |
+          pmapper graph create --localstack-endpoint http://localhost:4566
+          pmapper --account 000000000000 visualize
+      - name: Generate PMapper Graph Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Account Graph
+          path: "000000000000.svg"
       - name: Execute PMapper Test Cases
         env:
           PMAPPER_STORAGE: "."
