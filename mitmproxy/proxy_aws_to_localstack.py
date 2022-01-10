@@ -1,3 +1,23 @@
+#  Copyright (c) 2022 Erik Steringer and NCC Group
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy
+#  of this software and associated documentation files (the "Software"), to deal
+#  in the Software without restriction, including without limitation the rights
+#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#  copies of the Software, and to permit persons to whom the Software is
+#  furnished to do so, subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be included in all
+#  copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#  SOFTWARE.
+
 """
 The following Python code creates a simple mitmproxy addon. This addon changes the
 destination of a proxied HTTP(S) request to http://localhost:4566, the default
@@ -44,7 +64,7 @@ class Relay:
         # "not-opted-in" regions, we manipulate the response from LocalStack to ensure
         # Scout behaves correctly
 
-        if 'DescribeRegions' in flow.request.text and 'opt-in-status' in flow.request.text and 'not-opted-in' in flow.request.text:
+        if flow.request.text is not None and 'DescribeRegions' in flow.request.text and 'opt-in-status' in flow.request.text and 'not-opted-in' in flow.request.text:
             flow.response.text = flow.response.text.replace('east', 'fake')
             flow.response.text = flow.response.text.replace('west', 'fake')
 

@@ -9,7 +9,7 @@ PMapper are "dynamic" tools that operate by interacting with the AWS APIs to ret
 the capability to read/interpret infrastructure-as-code (IaC) files. 
 
 However, by deploying IaC (Terraform in this case) against an instance of LocalStack, then pointing the tools at 
-LocalStack, we can still perform scanning/evaluation for continuous integration.
+LocalStack, we can still perform scanning/testing to identify risks before they make it to production infrastructure.
 
 ## Implementation
 
@@ -37,11 +37,11 @@ To try this out with your own machine, follow these steps (tested on Ubuntu 20.0
 ### Prerequisites
 
 * Python 3.8+, using a virtualenv is *highly* recommended
-* [Terraform](https://www.terraform.io/)
+* [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/aws-get-started)
 * [LocalStack](https://github.com/localstack/localstack) (installed via `pip install localstack`)
 * [mitmproxy](https://mitmproxy.org/) (installed via `pip install mitmproxy`, consider using a separate virtualenv)
 * [Scout Suite](https://github.com/nccgroup/ScoutSuite) (installed via `pip install scoutsuite`)
-* [Principal Mapper](https://github.com/nccgroup/PMapper) (installed via `pip install principalmapper`
+* [Principal Mapper](https://github.com/nccgroup/PMapper) (installed via `pip install principalmapper`)
 
 ### Running
 
@@ -61,6 +61,13 @@ aws configure --profile localstack  # set fake access keys, region to us-east-1
 aws --profile localstack --endpoint-url http://localhost:4566 iam list-users
 ```
 
+Run PMapper against LocalStack like so:
+
+```bash
+pmapper --profile localstack graph create --localstack-endpoint http://localhost:4566
+pmapper --account 000000000000 visualize  # should output 000000000000.svg if graphviz is installed
+```
+
 **In a separate shell**, navigate to the `Aerides/mitmproxy` directory and run:
 
 ```bash
@@ -76,13 +83,18 @@ AWS_CA_BUNDLE=~/.mitmproxy/mitmproxy-ca-cert.pem \
 scout aws --services iam s3 ec2 vpc --region us-east-1
 ```
 
-This should generate a Scout Suite report and launch your web browser with its contents. Then, run PMapper 
-against LocalStack like so:
+This should generate a Scout Suite report and launch your web browser with its contents. You can try a similar 
+pattern with other tools. We have been able to successfully use the following tools:
 
-```bash
-pmapper --profile localstack graph create --localstack-endpoint http://localhost:4566
-pmapper --account 000000000000 visualize  # should output 000000000000.svg if graphviz is installed
-```
+* [AWS-Inventory](https://github.com/nccgroup/aws-inventory/)
+* [CloudMapper](https://github.com/duo-labs/cloudmapper)
+* [Prowler](https://github.com/toniblyx/prowler)
+* [Cartography](https://github.com/lyft/cartography)
 
+**Note:** This does not constitute an endorsement of support on the behalf of those projects. Due to mismatches between 
+LocalStack's responses and the AWS API's responses, these tools run into unexpected errors. You'll have to limit which 
+regions/services/checks the tools run.
 
+## License
 
+MIT, see [LICENSE](./LICENSE).
