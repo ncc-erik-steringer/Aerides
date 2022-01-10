@@ -51,6 +51,7 @@ jobs:
           PMAPPER_STORAGE: "."
           AWS_ACCESS_KEY_ID: AKIAFAKEFAKEFAKE
           AWS_SECRET_ACCESS_KEY: alsofakejustmakesthingswork
+          AWS_DEFAULT_REGION: us-east-1
           AWS_REGION: us-east-1
         run: |
           pmapper graph create --localstack-endpoint http://localhost:4566
