@@ -10,6 +10,8 @@ on:
     paths:
       - "**infracode/*"
       - "**testcode/*"
+  workflow_dispatch:
+
 
 jobs:
   execute:
