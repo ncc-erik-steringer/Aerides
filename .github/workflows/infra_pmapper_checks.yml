@@ -78,9 +78,10 @@ jobs:
           PMAPPER_STORAGE: "/tmp/artifacts"
         run: |
           cd $GITHUB_WORKSPACE/testcode
-          python -m unittest -v test_permissions.py 2> output.txt
+          python -m unittest -v test_permissions.py 1> stdout.txt 2> stderr.txt
           export RESULT=$?
-          echo "::set-output name=testresults::$(cat output.txt)"
+          cat stdout.txt stderr.txt
+          echo -e "::set-output name=testresults::$(cat stdout.txt stderr.txt)\n"
           exit $RESULT
         id: pmappertests
       - name: Update PR
