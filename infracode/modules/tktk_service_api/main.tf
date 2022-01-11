@@ -135,7 +135,7 @@ resource "aws_iam_user_policy" "api_developer_user_policy" {
       {
         Effect = "Allow"
         Action = "iam:PassRole"
-        Resource = "*"
+        Resource = "arn:aws:iam::*:role/APIEC2BackendHostRole"
         Condition = {
           "StringEquals" = {
             "iam:PassedToService" = "ec2.amazonaws.com"
