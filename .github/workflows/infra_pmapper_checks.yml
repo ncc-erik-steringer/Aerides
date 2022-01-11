@@ -66,9 +66,7 @@ jobs:
         with:
           name: Account Graph
           path: |
-            /tmp/artifacts/pmapper/
-            /tmp/artifacts/visualization.svg
-            /tmp/artifacts/analysis.md
+            /tmp/artifacts
       - name: Execute PMapper Test Cases
         env:
           PMAPPER_STORAGE: "/tmp/artifacts"
