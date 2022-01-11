@@ -67,7 +67,7 @@ jobs:
           HTTPS_PROXY: http://127.0.0.1:8080
           AWS_CA_BUNDLE: ~/.mitmproxy/mitmproxy-ca-cert.pem
         run: |
-          scout aws --services ec2 vpc iam s3 --report-dir /tmp/artifacts/scout-dir --no-browser
+          echo $(scout aws --services ec2 vpc iam s3 --report-dir /tmp/artifacts/scout-dir --no-browser)
       - name: Execute Scout Suite Test Cases
         continue-on-error: true
         run: |
