@@ -8,8 +8,12 @@ on:
     branches:
       - main
     paths:
-      - "**infracode/*"
-      - "**testcode/*"
+      - "infracode/**"
+      - "testcode/**"
+    types:
+      - opened
+      - reopened
+      - synchronize
   workflow_dispatch:
 
 
