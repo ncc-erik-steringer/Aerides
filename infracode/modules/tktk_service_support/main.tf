@@ -57,10 +57,11 @@ resource "aws_iam_role_policy" "support_iam_role_policy" {
       {
         Effect = "Allow"
         Action = [
-          "ec2:Describe*",
+          "ec2:*",
           "autoscaling:Get*",
           "elasticloadbalancing:List*",
-          "elasticloadbalancing:Get*"
+          "elasticloadbalancing:Get*",
+          "iam:PassRole"
         ],
         Resource = "*"
       }
