@@ -90,7 +90,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         with:
-          path: ${{env.GITHUB_WORKSPACE}}/testcode/ > full_output.txt
+          path: ${{env.GITHUB_WORKSPACE}}/testcode/full_output.txt
 
       - name: Process Test Results
         run: |
