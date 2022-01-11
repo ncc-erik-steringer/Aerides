@@ -69,11 +69,12 @@ jobs:
             /tmp/artifacts/*.svg
             /tmp/artifacts/*.md
       - name: Execute PMapper Test Cases
+        continue-on-error: true
         env:
           PMAPPER_STORAGE: "/tmp/artifacts"
         run: |
           cd $GITHUB_WORKSPACE/testcode
-          python -m unittest -v test_permissions.py
+          echo "::set-output name=testresults::$(python -m unittest -v test_permissions.py)"
         id: pmappertests
       - name: Update PR
         uses: actions/github-script@v5
@@ -85,5 +86,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'PMapper Test Result: ${{ steps.pmappertests.conclusion }}
+              body: 'PMapper Test Output: ${{ steps.pmappertests.conclusion }}\n\n```\n${{ steps.pmappertests.outputs.testresults }}\n```'
             })
