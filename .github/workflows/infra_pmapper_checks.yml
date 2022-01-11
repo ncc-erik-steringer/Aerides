@@ -91,10 +91,10 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: |
           curl -X POST \
-          --user ${{ github.actor }}:$GITHUB_TOKEN
+          --user ${{ github.actor }}:$GITHUB_TOKEN \
           -H 'Accept: application/vnd.github.v3+json' \
           --data "@$GITHUB_WORKSPACE/testcode/json_output.txt" \
-          "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/issues/${{ github.event.issue.number }}/comments"
+          "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/issues/${{ github.event.pull_request.number }}/comments"
 
       - name: Process Test Results
         run: |
