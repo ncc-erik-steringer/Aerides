@@ -78,6 +78,7 @@ jobs:
           PMAPPER_STORAGE: "/tmp/artifacts"
         run: |
           cd $GITHUB_WORKSPACE/testcode
+          python -m unittest -v test_permissions.py # DEBUG STEP
           python -m unittest -v test_permissions.py 1> stdout.txt 2> stderr.txt
           export RESULT=$?
           cat stdout.txt stderr.txt
@@ -94,5 +95,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'PMapper Test Output: ${{ steps.pmappertests.outcome }}\n\n```\n${{ steps.pmappertests.outputs.testresults }}\n```'
+              body: 'PMapper Test Output: ${{ steps.pmappertests.outcome }}\n\n```\nOUTPUTS: ${{ steps.pmappertests.outputs }}\n```'
             })
