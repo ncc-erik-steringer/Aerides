@@ -24,7 +24,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
       - name: Install Graphviz
-        run: "sudo apt-get install -y graphviz"
+        run: "sudo apt-get install -y graphviz jq"
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
       - name: Init Terraform
@@ -83,14 +83,17 @@ jobs:
           echo -e 'PMapper Test Results:\n\n```' > header.txt
           echo -e '\n```' > footer.txt
           cat header.txt results.txt footer.txt > full_output.txt
+          jq -Rs '{ body: . }' full_output.txt > json_output.txt
         id: pmappertests
       - name: Update PR
-        uses: machine-learning-apps/pr-comment@1.0.0
         if: ${{ github.event_name == 'pull_request' }}
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        with:
-          path: ${{env.GITHUB_WORKSPACE}}/testcode/full_output.txt
+        run: |
+          curl -XPOST\
+          -H 'Accept: application/vnd.github.v3+json' \
+          --data "@$GITHUB_WORKSPACE/testcode/json_output.txt"
+          "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/issues/${{ github.event.issue.number }}/comments"
 
       - name: Process Test Results
         run: |
