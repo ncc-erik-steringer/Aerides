@@ -80,20 +80,18 @@ jobs:
           cd $GITHUB_WORKSPACE/testcode
           echo $((python -m unittest -v test_permissions.py) 2> results.txt)
           cat results.txt
-          echo "::set-output name=test_results::$(cat results.txt)"
+          echo -e 'PMapper Test Results:\n\n```' > header.txt
+          echo -e '\n```' > footer.txt
+          cat header.txt results.txt footer.txt > full_output.txt
         id: pmappertests
       - name: Update PR
-        uses: actions/github-script@v5
+        uses: machine-learning-apps/pr-comment@1.0.0
         if: ${{ github.event_name == 'pull_request' }}
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: 'PMapper Test Output:\n\n```\n${{ steps.pmappertests.outputs.test_results }}\n```'
-            })
+          path: ${{env.GITHUB_WORKSPACE}}/testcode/ > full_output.txt
+
       - name: Process Test Results
         run: |
           cd $GITHUB_WORKSPACE/testcode
