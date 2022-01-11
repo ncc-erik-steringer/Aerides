@@ -46,9 +46,12 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/infracode
           terraform apply -auto-approve -var "acctid=000000000000"
+      - name: Make Artifacts Directory
+        run: |
+          mkdir -p /tmp/artifacts
       - name: Create PMapper Graph
         env:
-          PMAPPER_STORAGE: "$RUNNER_TEMP/pmapper"
+          PMAPPER_STORAGE: "/tmp/artifacts"
           AWS_ACCESS_KEY_ID: AKIAFAKEFAKEFAKE
           AWS_SECRET_ACCESS_KEY: alsofakejustmakesthingswork
           AWS_DEFAULT_REGION: us-east-1
@@ -63,12 +66,12 @@ jobs:
         with:
           name: Account Graph
           path: |
-            ${{ env.RUNNER_TEMP }}/pmapper
-            ${{ env.RUNNER_TEMP }}/visualization.svg
-            ${{ env.RUNNER_TEMP }}/analysis.md
+            /tmp/artifacts/pmapper/
+            /tmp/artifacts/visualization.svg
+            /tmp/artifacts/analysis.md
       - name: Execute PMapper Test Cases
         env:
-          PMAPPER_STORAGE: "$RUNNER_TEMP/pmapper"
+          PMAPPER_STORAGE: "/tmp/artifacts"
         run: |
           cd $GITHUB_WORKSPACE/testcode
           python -m unittest -v test_permissions.py
