@@ -78,7 +78,10 @@ jobs:
           PMAPPER_STORAGE: "/tmp/artifacts"
         run: |
           cd $GITHUB_WORKSPACE/testcode
-          echo "::set-output name=testresults::$(python -m unittest -v test_permissions.py)"
+          python -m unittest -v test_permissions.py 2> output.txt
+          export RESULT=$?
+          echo "::set-output name=testresults::$(cat output.txt)"
+          exit $RESULT
         id: pmappertests
       - name: Update PR
         uses: actions/github-script@v5
@@ -90,5 +93,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'PMapper Test Output: ${{ steps.pmappertests.conclusion }}\n\n```\n${{ steps.pmappertests.outputs.testresults }}\n```'
+              body: 'PMapper Test Output: ${{ steps.pmappertests.outcome }}\n\n```\n${{ steps.pmappertests.outputs.testresults }}\n```'
             })
