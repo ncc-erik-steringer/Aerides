@@ -8,7 +8,7 @@ This project is a demonstration for using Scout Suite and Principal Mapper with 
 PMapper are "dynamic" tools that operate by interacting with the AWS APIs to retrieve data. These tools do not have 
 the capability to read/interpret infrastructure-as-code (IaC) files. 
 
-However, by deploying IaC (Terraform in this case) against an instance of LocalStack, then pointing the tools at 
+However, by deploying IaC (Terraform HCL in this case) against an instance of LocalStack, then pointing the tools at 
 LocalStack, we can still perform scanning/testing to identify risks before they make it to production infrastructure.
 
 ## Implementation
@@ -57,7 +57,7 @@ This will launch LocalStack (daemon mode) and deploy the Terraform code. Now it 
 the mock infrastructure. For example:
 
 ```bash
-aws configure --profile localstack  # set fake access keys, region to us-east-1
+aws configure --profile localstack  # set fake access keys, set default region to us-east-1
 aws --profile localstack --endpoint-url http://localhost:4566 iam list-users
 ```
 
@@ -93,7 +93,7 @@ pattern with other tools. We have been able to successfully use the following to
 
 **Note:** This does not constitute an endorsement of support on the behalf of those projects. Due to mismatches between 
 LocalStack's responses and the AWS API's responses, these tools run into unexpected errors. You'll have to limit which 
-regions/services/checks the tools run.
+regions/services/checks the tools run and limit which test cases you attempt to perform via these tools. 
 
 ## License
 
