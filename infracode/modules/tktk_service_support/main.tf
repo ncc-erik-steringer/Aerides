@@ -58,6 +58,7 @@ resource "aws_iam_role_policy" "support_iam_role_policy" {
         Effect = "Allow"
         Action = [
           "ec2:Describe*",
+          "ssm:*",
           "autoscaling:Get*",
           "elasticloadbalancing:List*",
           "elasticloadbalancing:Get*"
