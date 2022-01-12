@@ -97,7 +97,7 @@ resource "aws_iam_group_policy" "operator_policy" {
       {
         Effect = "Allow"
         Action = "iam:PassRole",
-        Resource = "*",
+        Resource = "arn:aws:iam::*:role/APIEC2BackendHostRole",
         Condition = {
           "StringEquals" = {
             "iam:PassedToService": "ec2.amazonaws.com"

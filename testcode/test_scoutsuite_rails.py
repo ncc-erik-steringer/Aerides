@@ -19,8 +19,28 @@
 #  SOFTWARE.
 
 import json
-from typing import Optional
+from typing import Optional, Union
 import unittest
+
+
+def _get_item(ptr, itempath: str) -> Union[str, dict, list, None]:
+    """Utility function. The ptr param should point at .services then follow the itempath (separated via '.') to
+    the expected object. Returns None if invalid (tries to avoid Error)."""
+    root = ptr
+    for element in itempath.split('.'):
+        if isinstance(root, dict):
+            if element in root:
+                root = root[element]
+            else:
+                return None
+        elif isinstance(root, list):
+            index = int(element)
+            if not (0 <= index < len(root)):
+                return None
+            root = root[index]
+        else:
+            return None
+    return root
 
 
 class TestScoutSuiteExpected(unittest.TestCase):
@@ -28,19 +48,17 @@ class TestScoutSuiteExpected(unittest.TestCase):
     def setUp(self) -> None:
         # per https://github.com/nccgroup/ScoutSuite/wiki/Exporting-and-Programmatically-Accessing-the-Report
 
-        with open('./scoutsuite-report/scoutsuite-results/scoutsuite_results_aws-000000000000.js') as fd:
+        with open('/tmp/artifacts/scout-dir/scoutsuite-results/scoutsuite_results_aws-000000000000.js') as fd:
             fd.readline()  # discard first line
             self.scoutdata = json.load(fd)  # type: dict
 
     def test_ec2_no_ports_open_to_all(self):
-        # Verify that none of the security groups have a port open to 0.0.0.0/0
+        """Verify that none of the security groups have a port open to 0.0.0.0/0"""
 
         # start by grabbing a handle to the .services.ec2.findings dict
-        ptr = self.scoutdata.get('services', {})
-        ptr = ptr.get('ec2', {})
-        ptr = ptr.get('findings')  # type: Optional[dict]
+        ptr = _get_item(self.scoutdata, 'services.ec2.findings')
         if ptr is None:
-            return
+            self.fail('Expected path services.ec2.findings in Scout Suite data was not found')
 
         # look at all findings for "port is open", group them up, report
         issues = []
@@ -60,43 +78,79 @@ class TestScoutSuiteExpected(unittest.TestCase):
                 )
             )
 
-    def test_iam_no_inline_notaction(self):
-        # Verify no inline IAM Policies (for Users/Roles/Groups) use the NotAction field
+    def test_iam_no_inline_passrole(self):
+        """Verify there are no inline policies granting iam:PassRole for *"""
 
-        # start by getting a handle to the .services.iam.findings dict
-        ptr = self.scoutdata.get('services', {})
-        ptr = ptr.get('iam', {})
-        ptr = ptr.get('findings')  # type: Optional[dict]
+        # get the handle
+        ptr = _get_item(self.scoutdata, 'services.iam.findings')
         if ptr is None:
-            return
+            self.fail('Expected path services.iam.findings in Scout Suite data was not found')
 
-        # look at each of the NotAction findings
-        inline_group_policy_finding = ptr.get('iam-inline-group-policy-allows-NotActions')
-        if inline_group_policy_finding is not None:
-            if inline_group_policy_finding['flagged_items'] > 0:
-                self.fail(
-                    'IAM Group Inline Policy/Policies had NotAction Element:\n\n{}'.format(
-                        '\n'.join(['* {}'.format(x) for x in inline_group_policy_finding.get('items')])
-                    )
-                )
+        # Review all iam-PassRole findings
+        finding_names = (
+            'iam-inline-role-policy-allows-iam-PassRole',
+            'iam-inline-user-policy-allows-iam-PassRole',
+            'iam-inline-group-policy-allows-iam-PassRole'
+        )
+        finding_items = []
 
-        inline_role_policy_finding = ptr.get('iam-inline-role-policy-allows-NotActions')
-        if inline_role_policy_finding is not None:
-            if inline_role_policy_finding['flagged_items'] > 0:
-                self.fail(
-                    'IAM Role Inline Policy/Policies had NotAction Element:\n\n{}'.format(
-                        '\n'.join(['* {}'.format(x) for x in inline_role_policy_finding.get('items')])
-                    )
-                )
+        for finding_name in finding_names:
+            finding_contents = ptr.get(finding_name)
+            if finding_contents is not None and finding_contents['flagged_items'] > 0:
+                finding_items.extend(finding_contents['items'])
 
-        inline_user_policy_finding = ptr.get('iam-inline-user-policy-allows-NotActions')
-        if inline_user_policy_finding is not None:
-            if inline_user_policy_finding['flagged_items'] > 0:
-                self.fail(
-                    'IAM User Inline Policy/Policies had NotAction Element:\n\n{}'.format(
-                        '\n'.join(['* {}'.format(x) for x in inline_user_policy_finding.get('items')])
-                    )
+        if len(finding_items) > 0:
+            item_listing = []
+            for item in finding_items:
+                root = self.scoutdata.get('services')
+                item_ref = _get_item(root, '.'.join(item.split('.')[:3]))  # type: Optional[dict]
+                if item_ref is not None:
+                    item_listing.append(item_ref.get('arn'))
+                else:
+                    item_listing.append(item)
+            self.fail(
+                'The following IAM Users/Roles/Groups had an inline policy allowing '
+                'iam:PassRole for all resources:\n\n{}'.format(
+                    '\n'.join(['* {}'.format(x) for x in item_listing])
                 )
+            )
+
+    def test_iam_no_inline_notaction(self):
+        """Verify no inline IAM Policies (for Users/Roles/Groups) use the NotAction field"""
+
+        # get the handle
+        ptr = _get_item(self.scoutdata, 'services.iam.findings')
+        if ptr is None:
+            self.fail('Expected path services.iam.findings in Scout Suite data was not found')
+
+        # Review all iam-PassRole findings
+        finding_names = (
+            'iam-inline-role-policy-allows-NotActions',
+            'iam-inline-user-policy-allows-NotActions',
+            'iam-inline-group-policy-allows-NotActions'
+        )
+        finding_items = []
+
+        for finding_name in finding_names:
+            finding_contents = ptr.get(finding_name)
+            if finding_contents is not None:
+                finding_items.extend(finding_contents['items'])
+
+        if len(finding_items) > 0:
+            item_listing = []
+            for item in finding_items:
+                root = self.scoutdata.get('services')
+                item_ref = _get_item(root, '.'.join(item.split('.')[:3]))  # type: Optional[dict]
+                if item_ref is not None:
+                    item_listing.append(item_ref.get('arn'))
+                else:
+                    item_listing.append(item)
+            self.fail(
+                'The following IAM Users/Roles/Groups had an inline policy that uses '
+                'NotAction in a statement:\n\n{}'.format(
+                    '\n'.join(['* {}'.format(x) for x in item_listing])
+                )
+            )
 
     def tearDown(self) -> None:
         del self.scoutdata

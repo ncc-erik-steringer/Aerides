@@ -1,6 +1,6 @@
-# GitHub Workflow to execute test cases via Principal Mapper
+# GitHub Workflow to execute test cases via Scout Suite
 
-name: "PMapper Checks"
+name: "Scout Suite Checks"
 
 # Run when PR against main comes through with infracode/testcode changes
 on:
@@ -24,7 +24,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
       - name: Install Graphviz
-        run: "sudo apt-get install -y graphviz jq"
+        run: "sudo apt-get install -y jq"
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
       - name: Init Terraform
@@ -37,8 +37,8 @@ jobs:
           terraform validate -no-color
       - name: Setup LocalStack
         run: |
-          echo "Install LocalStack, AWS CLI, PMapper via pip"
-          pip install localstack principalmapper
+          echo "Install LocalStack, AWS CLI, Scout Suite via pip"
+          pip install localstack scoutsuite mitmproxy
           echo "Pull localstack/localstack from Docker"
           docker pull localstack/localstack
           echo "Start LocalStack"
@@ -53,38 +53,32 @@ jobs:
       - name: Make Artifacts Directory
         run: |
           mkdir -p /tmp/artifacts
-      - name: Create PMapper Graph
+      - name: Launch Mitmproxy
+        run: |
+          nohup mitmdump --listen-host 127.0.0.1 --listen-port 8080 -s $GITHUB_WORKSPACE/mitmproxy/proxy_aws_to_localstack.py -k --quiet &
+          disown
+      - name: Create Scout Suite Output
         env:
-          PMAPPER_STORAGE: "/tmp/artifacts"
           AWS_ACCESS_KEY_ID: AKIAFAKEFAKEFAKE
           AWS_SECRET_ACCESS_KEY: alsofakejustmakesthingswork
           AWS_DEFAULT_REGION: us-east-1
           AWS_REGION: us-east-1
+          HTTP_PROXY: http://127.0.0.1:8080
+          HTTPS_PROXY: http://127.0.0.1:8080
+          AWS_CA_BUNDLE: ~/.mitmproxy/mitmproxy-ca-cert.pem
         run: |
-          pmapper graph create --localstack-endpoint http://localhost:4566 --include-regions us-east-1 --exclude-services autoscaling 
-          pmapper --account 000000000000 visualize
-          mv 000000000000.svg /tmp/artifacts/visualization.svg
-          pmapper --account 000000000000 analysis --output-type text > /tmp/artifacts/analysis.md
-      - name: Generate PMapper Graph Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: Account Graph
-          path: |
-            /tmp/artifacts/*.svg
-            /tmp/artifacts/*.md
-      - name: Execute PMapper Test Cases
+          echo $(scout aws --services ec2 vpc iam s3 --report-dir /tmp/artifacts/scout-dir --no-browser)
+      - name: Execute Scout Suite Test Cases
         continue-on-error: true
-        env:
-          PMAPPER_STORAGE: "/tmp/artifacts"
         run: |
           cd $GITHUB_WORKSPACE/testcode
-          echo $((python -m unittest -v test_permissions.py) 2> results.txt)
+          echo $((python -m unittest -v test_scoutsuite_rails.py) 2> results.txt)
           cat results.txt
-          echo -e 'PMapper Test Results:\n\n```' > header.txt
+          echo -e 'Scout Suite Test Results:\n\n```' > header.txt
           echo -e '\n```' > footer.txt
           cat header.txt results.txt footer.txt > full_output.txt
           jq -Rs '{ body: . }' full_output.txt > json_output.txt
-        id: pmappertests
+        id: scouttests
       - name: Update PR
         if: ${{ github.event_name == 'pull_request' }}
         env:

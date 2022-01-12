@@ -18,7 +18,7 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-from typing import List
+from typing import List, Tuple, Optional
 import unittest
 
 from principalmapper.common import *
@@ -34,20 +34,24 @@ class TestAuthorizationBoundaries(unittest.TestCase):
 
     def test_no_privesc(self):
         """Ensure that nobody can escalate their privileges from non-admin to to admin."""
+        privesc_paths = []  # type: List[Tuple[Node, List[Edge]]]
         for node in self.test_graph.nodes:
             if not node.is_admin:
                 can_escalate, escalation_path = can_privesc(self.test_graph, node)
-                self.assertFalse(
-                    can_escalate,
-                    '{} can priv-esc: {}'.format(
-                        node.searchable_name(),
-                        escalation_path
+                if can_escalate:
+                    privesc_paths.append((node, escalation_path))
+
+        if len(privesc_paths) > 0:
+            self.fail(
+                'Privilege escalation risks detected:\n\n{}'.format(
+                    '\n'.join(
+                        ['* {}'.format(', '.join([x.describe_edge() for x in path])) for node, path in privesc_paths]
                     )
                 )
+            )
 
     def test_support_cannot_put(self):
-        """Ensure that the IAM Role named 'support-staff' cannot call s3:PutObject for any of
-        the S3 buckets."""
+        """Ensure that the IAM Role named 'support-staff' cannot call s3:PutObject for any of the S3 buckets."""
 
         s3_bucket_policies = []
         for policy in self.test_graph.policies:
@@ -55,6 +59,8 @@ class TestAuthorizationBoundaries(unittest.TestCase):
                 s3_bucket_policies.append(policy)
 
         support_role = self.test_graph.get_node_by_searchable_name('role/support-staff')
+
+        violations = []
         for s3_bucket_policy in s3_bucket_policies:
             test_arn = s3_bucket_policy.arn + '/test_object'
             result = query_interface.search_authorization_full(
@@ -67,16 +73,18 @@ class TestAuthorizationBoundaries(unittest.TestCase):
                 '000000000000'
             )
             if result.allowed:
-                self.fail(
-                    '{} is allowed to call s3:PutObject with {}'.format(
-                        support_role.searchable_name(),
-                        test_arn
-                    )
-                )
+                violations.append('{} is allowed to call s3:PutObject for {}'.format(
+                    support_role.searchable_name(),
+                    test_arn
+                ))
+
+        if len(violations) > 0:
+            self.fail('Support was allowed to upload files to S3:\n\n{}'.format(
+                '\n'.join(['* {}'.format(x) for x in violations])
+            ))
 
     def test_support_has_no_edges(self):
-        """Ensure that the IAM Role named 'support-staff' cannot access any other
-        users or roles in the account."""
+        """Ensure that the IAM Role named 'support-staff' cannot access any other users or roles in the account."""
 
         support_edges = []  # type: List[Edge]
         for edge in self.test_graph.edges:
