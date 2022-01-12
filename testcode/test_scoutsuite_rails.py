@@ -53,14 +53,12 @@ class TestScoutSuiteExpected(unittest.TestCase):
             self.scoutdata = json.load(fd)  # type: dict
 
     def test_ec2_no_ports_open_to_all(self):
-        # Verify that none of the security groups have a port open to 0.0.0.0/0
+        """Verify that none of the security groups have a port open to 0.0.0.0/0"""
 
         # start by grabbing a handle to the .services.ec2.findings dict
-        ptr = self.scoutdata.get('services', {})
-        ptr = ptr.get('ec2', {})
-        ptr = ptr.get('findings')  # type: Optional[dict]
+        ptr = _get_item(self.scoutdata, 'services.ec2.findings')
         if ptr is None:
-            return
+            self.fail('Expected path services.ec2.findings in Scout Suite data was not found')
 
         # look at all findings for "port is open", group them up, report
         issues = []
@@ -84,11 +82,9 @@ class TestScoutSuiteExpected(unittest.TestCase):
         """Verify there are no inline policies granting iam:PassRole for *"""
 
         # get the handle
-        ptr = self.scoutdata.get('services', {})
-        ptr = ptr.get('iam', {})
-        ptr = ptr.get('findings')  # type: Optional[dict]
+        ptr = _get_item(self.scoutdata, 'services.iam.findings')
         if ptr is None:
-            return
+            self.fail('Expected path services.iam.findings in Scout Suite data was not found')
 
         # Review all iam-PassRole findings
         finding_names = (
@@ -100,7 +96,7 @@ class TestScoutSuiteExpected(unittest.TestCase):
 
         for finding_name in finding_names:
             finding_contents = ptr.get(finding_name)
-            if finding_contents is not None:
+            if finding_contents is not None and finding_contents['flagged_items'] > 0:
                 finding_items.extend(finding_contents['items'])
 
         if len(finding_items) > 0:
@@ -120,14 +116,12 @@ class TestScoutSuiteExpected(unittest.TestCase):
             )
 
     def test_iam_no_inline_notaction(self):
-        # Verify no inline IAM Policies (for Users/Roles/Groups) use the NotAction field
+        """Verify no inline IAM Policies (for Users/Roles/Groups) use the NotAction field"""
 
         # get the handle
-        ptr = self.scoutdata.get('services', {})
-        ptr = ptr.get('iam', {})
-        ptr = ptr.get('findings')  # type: Optional[dict]
+        ptr = _get_item(self.scoutdata, 'services.iam.findings')
         if ptr is None:
-            return
+            self.fail('Expected path services.iam.findings in Scout Suite data was not found')
 
         # Review all iam-PassRole findings
         finding_names = (
