@@ -64,7 +64,7 @@ aws --profile localstack --endpoint-url http://localhost:4566 iam list-users
 Run PMapper against LocalStack like so:
 
 ```bash
-pmapper --profile localstack graph create --localstack-endpoint http://localhost:4566
+pmapper --profile localstack graph create --localstack-endpoint http://localhost:4566 --exclude-services autoscaling
 pmapper --account 000000000000 visualize  # should output 000000000000.svg if graphviz is installed
 ```
 
