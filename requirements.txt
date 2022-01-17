@@ -1,0 +1,6 @@
+principalmapper>=1.1.4
+scoutsuite~=5.10.2
+localstack~=0.13.2.1
+
+# NOTE: Consider installing this separately
+# mitmproxy~=7.0.4

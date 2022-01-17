@@ -77,6 +77,7 @@ mitmdump -k --listen-host 127.0.0.1 --listen-port 8080 -s proxy_aws_to_localstac
 With `mitmdump` running, go back to your first shell and run Scout Suite while using the proxy like so:
 
 ```bash
+# Consider exposting these variables if you need to run multiple commands
 HTTP_PROXY=http://127.0.0.1:8080 \
 HTTPS_PROXY=http://127.0.0.1:8080 \
 AWS_CA_BUNDLE=~/.mitmproxy/mitmproxy-ca-cert.pem \

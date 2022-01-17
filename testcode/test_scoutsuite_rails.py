@@ -154,3 +154,7 @@ class TestScoutSuiteExpected(unittest.TestCase):
 
     def tearDown(self) -> None:
         del self.scoutdata
+
+
+if __name__ == '__main__':
+    unittest.main()
