@@ -96,6 +96,21 @@ pattern with other tools. We have been able to successfully use the following to
 LocalStack's responses and the AWS API's responses, these tools run into unexpected errors. You'll have to limit which 
 regions/services/checks the tools run and limit which test cases you attempt to perform via these tools. 
 
+## General Implementation of this Technique
+
+While this repository is hosted on GitHub and uses GitHub Actions, we can use the same technique in other CI 
+solutions. The general process is:
+
+1. Download the IaC onto the host/container/runner that is executing the CI process
+2. Install dependencies: LocalStack, Terraform, and any additional dynamic tools to use for testing (consider creating an image with this already installed)
+3. Initialize LocalStack and run it in the background throughout the remainder of the process (`-d` parameter)
+4. Initialize Terraform
+5. Use Terraform to apply the IaC to LocalStack
+6. (If needed) Initialize mitmproxy and allow it to run in the background throughout the remainder of the process (`nohup` and `disown` on Ubuntu)
+7. Run dynamic tools to gather data from LocalStack, using the proxy where necessary
+8. Run test cases against the data gathered from the dynamic tools, or run scripts that normally call the AWS APIs
+
+
 ## License
 
 MIT, see [LICENSE](./LICENSE).
