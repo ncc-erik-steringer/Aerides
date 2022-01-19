@@ -98,6 +98,26 @@ resource "aws_iam_role" "api_host_role" {
             "dynamodb:PutItem"
           ]
           Resource = format("arn:aws:dynamodb:us-east-1:%s:table/api_data", var.acctid)
+        },
+        {
+          Effect = "Allow"
+          Action = [
+            "ssmmessages:*",
+            "ec2messages:*",
+            "ssm:DescribeAssocation",
+            "ssm:GetDocument",
+            "ssm:DescribeDocument",
+            "ssm:GetManifest",
+            "ssm:GetParameter*",
+            "ssm:ListAssociations",
+            "ssm:ListInstanceAssociations",
+            "ssm:PutInventory",
+            "ssm:PutComplianceItems",
+            "ssm:UpdateAssociationStatus",
+            "ssm:UpdateInstanceAssociationStatus",
+            "ssm:UpdateInstanceInformation"
+          ]
+          Resource = "*"
         }
       ]
     })
