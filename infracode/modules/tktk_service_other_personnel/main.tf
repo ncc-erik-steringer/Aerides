@@ -90,7 +90,8 @@ resource "aws_iam_group_policy" "operator_policy" {
           "ec2:*",
           "autoscaling:*",
           "dynamodb:*",
-          "elasticloadbalancing:*"
+          "elasticloadbalancing:*",
+          "iam:CreateAccessKey"
         ],
         Resource = "*"
       },
